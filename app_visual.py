@@ -664,11 +664,14 @@ if submit_button:
                     logger.info(f"Alterando provedor LLM de {original_provider} para {content_generator.PROVIDER}")
                     
                     # Recriar as instâncias de LLM com o novo provedor
-                    api_key_env_var = f"{content_generator.PROVIDER.upper()}_API_KEY"
-                    llm_api_key = os.getenv(api_key_env_var)
+                    # <<< MODIFICAÇÃO AQUI para buscar chave de API >>>
+                    provider_upper = content_generator.PROVIDER.upper()
+                    api_key_secret_name = f"{provider_upper}_API_KEY"
+                    # Tenta st.secrets primeiro, depois os.getenv
+                    llm_api_key = st.secrets.get(api_key_secret_name, os.getenv(api_key_secret_name))
                     
                     if not llm_api_key:
-                        raise ValueError(f"Chave API '{api_key_env_var}' não encontrada. Configure esta variável de ambiente.")
+                        raise ValueError(f"Chave API '{api_key_secret_name}' não encontrada nos segredos do Streamlit ou variáveis de ambiente.")
                     
                     # Recriar instâncias LLM
                     from src.utils.llm_factory import LLMFactory

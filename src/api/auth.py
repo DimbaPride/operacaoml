@@ -2,7 +2,8 @@ import os
 import httpx
 import time
 import logging
-from dotenv import load_dotenv, set_key
+import streamlit as st
+# from dotenv import load_dotenv, set_key
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -11,15 +12,16 @@ class MeliAuth:
     """Classe para gerenciar autenticação com o Mercado Livre"""
     
     def __init__(self):
-        # Carregar variáveis de ambiente AQUI, dentro do init
-        # Adicionar override=True para garantir que valores do .env sobreponham os do sistema
-        load_dotenv(override=True) 
-        logger.info("Tentando carregar credenciais do .env dentro de MeliAuth.__init__")
+        # Tentar carregar dos segredos do Streamlit primeiro, fallback para variáveis de ambiente
+        # load_dotenv(override=True)
+        logger.info("Tentando carregar credenciais via st.secrets (deploy) ou os.getenv (local)...")
         
-        self.client_id = os.getenv("MELI_CLIENT_ID")
-        self.client_secret = os.getenv("MELI_CLIENT_SECRET")
-        self.refresh_token = os.getenv("MELI_REFRESH_TOKEN")
-        self.redirect_uri = os.getenv("MELI_REDIRECT_URI")
+        # Usar st.secrets.get com fallback para os.getenv
+        self.client_id = st.secrets.get("MELI_CLIENT_ID", os.getenv("MELI_CLIENT_ID"))
+        self.client_secret = st.secrets.get("MELI_CLIENT_SECRET", os.getenv("MELI_CLIENT_SECRET"))
+        self.refresh_token = st.secrets.get("MELI_REFRESH_TOKEN", os.getenv("MELI_REFRESH_TOKEN"))
+        self.redirect_uri = st.secrets.get("MELI_REDIRECT_URI", os.getenv("MELI_REDIRECT_URI"))
+        
         self.access_token = None # Iniciar como None
         self.client = httpx.AsyncClient(timeout=30.0)
         self.last_refresh_time = 0
@@ -93,22 +95,27 @@ class MeliAuth:
                 expires_in = data.get('expires_in')
                 logger.info(f"Token atualizado com sucesso. Expira em {expires_in} segundos.")
 
-                # --- SALVAR O NOVO REFRESH TOKEN DE VOLTA NO .ENV --- 
-                if new_refresh_token and new_refresh_token != self.refresh_token:
-                    logger.info(f"Novo refresh token recebido: ...{new_refresh_token[-6:]}")
-                    env_path = '.env' # Assume que o .env está na raiz do projeto
-                    # Usar set_key da biblioteca python-dotenv
-                    if set_key(env_path, 'MELI_REFRESH_TOKEN', new_refresh_token):
-                        self.refresh_token = new_refresh_token # Atualiza o refresh token na instância
-                        logger.info("Novo refresh token salvo com sucesso no arquivo .env.")
-                    else:
-                        # set_key retorna False se não conseguir encontrar/escrever no arquivo
-                        logger.error(f"Falha ao salvar o novo refresh token no arquivo {env_path} usando set_key! Verifique permissões e se o arquivo existe.")
-                elif not new_refresh_token:
-                     logger.warning("API não retornou um novo refresh token na resposta.")
-                # else: # Não precisa logar se for o mesmo
-                     # logger.info("Refresh token retornado pela API é o mesmo que já tínhamos.")
+                # --- REMOVER OU COMENTAR A LÓGICA DE SALVAR O REFRESH TOKEN NO .ENV --- 
+                # Isso não funcionará no Streamlit Cloud
+                # if new_refresh_token and new_refresh_token != self.refresh_token:
+                #     logger.info(f"Novo refresh token recebido: ...{new_refresh_token[-6:]}")
+                #     env_path = '.env' # Assume que o .env está na raiz do projeto
+                #     # Usar set_key da biblioteca python-dotenv
+                #     if set_key(env_path, 'MELI_REFRESH_TOKEN', new_refresh_token):
+                #         self.refresh_token = new_refresh_token # Atualiza o refresh token na instância
+                #         logger.info("Novo refresh token salvo com sucesso no arquivo .env.")
+                #     else:
+                #         # set_key retorna False se não conseguir encontrar/escrever no arquivo
+                #         logger.error(f"Falha ao salvar o novo refresh token no arquivo {env_path} usando set_key! Verifique permissões e se o arquivo existe.")
+                # elif not new_refresh_token:
+                #      logger.warning("API não retornou um novo refresh token na resposta.")
                 # -------------------------------------------------------
+                
+                # <<< APENAS ATUALIZAR NA INSTÂNCIA (SE NECESSÁRIO PARA USO IMEDIATO) >>>
+                if new_refresh_token and new_refresh_token != self.refresh_token:
+                     self.refresh_token = new_refresh_token
+                     logger.info(f"Novo refresh token recebido (instância atualizada): ...{new_refresh_token[-6:]}")
+                     logger.warning("Lembre-se de atualizar o MELI_REFRESH_TOKEN nos segredos do Streamlit Cloud se este token expirar.")
                 
                 return new_access_token
             else:
