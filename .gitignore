@@ -1,0 +1,34 @@
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Arquivos de configuração
+
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Distribuição
+dist/
+build/
+*.egg-info/
+
+# Dados
+data/*
+!data/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+
+.streamlit/secrets.toml

@@ -1,0 +1,1 @@
+# Este arquivo torna o diretório ad_creator um pacote Python 

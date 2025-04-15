@@ -1,0 +1,30 @@
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Distribuição
+dist/
+build/
+*.egg-info/
+
+# Dados
+data/*
+!data/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo
