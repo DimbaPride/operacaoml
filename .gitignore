@@ -32,3 +32,4 @@ logs/
 *.swo
 
 .streamlit/secrets.toml
+.env
